@@ -15,6 +15,11 @@ const ssoAppName: string = 'Office-Addin-Taskpane-SSO-Test';
 const secret: string = '9lcUGBHc8F0s/8FINhwLmTUuhn@KBp=_';
 
 describe("Unit Tests", function () {
+    before(function() {
+        if (process.platform == "linux") {
+            this.skip();
+        }
+    });
     describe("addSecretToCredentialStore()/getSecretFromCredentialStore()", function () {
         it("Add secret and retrive secret from credential store", function () {
             ssoData.addSecretToCredentialStore(ssoAppName, secret, true /* isTest */);
