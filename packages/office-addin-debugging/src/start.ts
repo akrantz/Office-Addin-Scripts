@@ -192,10 +192,11 @@ export async function startDebugging(manifestPath: string, appType: AppType, app
     devServerCommandLine?: string, devServerPort?: number,
     packagerCommandLine?: string, packagerHost?: string, packagerPort?: string,
     enableDebugging: boolean = true, enableLiveReload: boolean = true) {
-    
+
     try {
 
         const isWindowsPlatform = (process.platform === "win32");
+        const isWindows10 = isWindowsPlatform && (parseInt(os.release(), 10) === 10);
         const isDesktopAppType = (appType === AppType.Desktop);
         const isWebAppType = (appType === AppType.Web);
         const isProxyDebuggingMethod = (debuggingMethod === DebuggingMethod.Proxy);
@@ -204,27 +205,27 @@ export async function startDebugging(manifestPath: string, appType: AppType, app
         const canEnableLiveReload: boolean = isDesktopAppType && isProxyDebuggingMethod && !!packagerCommandLine;
         let packagerPromise: Promise<void> | undefined;
         let devServerPromise: Promise<void> | undefined;
-    
+
         // only enable live reload if it can be enabled
         enableLiveReload = enableLiveReload && canEnableLiveReload;
-    
+
         console.log(enableDebugging
             ? "Debugging is being started..."
             : "Starting without debugging...");
         console.log(`App type: ${appType.toString()}`);
-    
+
         const manifestInfo = await readManifestFile(manifestPath);
-    
+
         if (!manifestInfo.id) {
             throw new Error("Manifest does not contain the id for the Office Add-in.");
         }
-    
+
         // enable loopback for Edge
-        if (isWindowsPlatform && parseInt(os.release()) === 10) {
+        if (isWindows10) {
             const name = isDesktopAppType ? "EdgeWebView" : "EdgeWebBrowser";
             await devSettings.ensureLoopbackIsEnabled(name);
         }
-    
+
         // enable debugging
         if (isDesktopAppType && isWindowsPlatform) {
             await devSettings.enableDebugging(manifestInfo.id, enableDebugging, debuggingMethod);
@@ -232,7 +233,7 @@ export async function startDebugging(manifestPath: string, appType: AppType, app
                 console.log(`Enabled debugging for add-in ${manifestInfo.id}. Debug method: ${debuggingMethod.toString()}`);
             }
         }
-    
+
         // enable live reload
         if (isDesktopAppType && isWindowsPlatform) {
             await devSettings.enableLiveReload(manifestInfo.id, enableLiveReload);
@@ -240,22 +241,22 @@ export async function startDebugging(manifestPath: string, appType: AppType, app
                 console.log(`Enabled live-reload for add-in ${manifestInfo.id}.`);
             }
         }
-    
+
         // set source bundle url
         if (isDesktopAppType && isWindowsPlatform) {
             if (sourceBundleUrlComponents) {
                 await devSettings.setSourceBundleUrl(manifestInfo.id, sourceBundleUrlComponents);
             }
         }
-    
+
         if (packagerCommandLine && isProxyDebuggingMethod && isDesktopAppType) {
             packagerPromise = runPackager(packagerCommandLine, packagerHost, packagerPort);
         }
-    
+
         if (devServerCommandLine) {
             devServerPromise = runDevServer(devServerCommandLine, devServerPort);
         }
-    
+
         if (packagerPromise !== undefined) {
             try {
                 await packagerPromise;
@@ -263,7 +264,7 @@ export async function startDebugging(manifestPath: string, appType: AppType, app
                 console.log(`Unable to start the packager. ${err}`);
             }
         }
-    
+
         if (devServerPromise !== undefined) {
             try {
                 await devServerPromise;
@@ -271,7 +272,7 @@ export async function startDebugging(manifestPath: string, appType: AppType, app
                 console.log(`Unable to start the dev server. ${err}`);
             }
         }
-    
+
         if (enableDebugging && isProxyDebuggingMethod && isDesktopAppType) {
             try {
                 await runNodeDebugger();
@@ -279,7 +280,7 @@ export async function startDebugging(manifestPath: string, appType: AppType, app
                 console.log(`Unable to start the node debugger. ${err}`);
             }
         }
-    
+
         if (isDesktopAppType) {
             try {
                 console.log(`Sideloading the Office Add-in...`);
@@ -288,7 +289,7 @@ export async function startDebugging(manifestPath: string, appType: AppType, app
                 throw new Error(`Unable to sideload the Office Add-in. \n${err}`);
             }
         }
-    
+
         console.log(enableDebugging
             ? "Debugging started."
             : "Started.");
