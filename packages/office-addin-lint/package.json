@@ -34,7 +34,6 @@
   },
   "devDependencies": {
     "@types/assert": "^1.4.6",
-    "@types/es6-promise": "^3.3.0",
     "@types/mocha": "^5.2.5",
     "@types/node": "^12.20.6",
     "@types/node-fetch": "^2.5.5",
